@@ -1,0 +1,217 @@
+<style>
+    body {
+        font-family: 'Unica One', cursive;
+        background:url('{{ STATIC_URL }}shl.png');
+        background-repeat:repeat;
+    }
+    a {
+        text-decoration: none;
+        color:inherit;
+    }
+    input {
+        font-family: 'Unica One', cursive;
+    }
+    button {
+        margin:0 auto;
+        position:relative;
+        font-family: 'Unica One', cursive;
+        margin-top:15px;
+    }
+    #container {
+        margin:0 auto;
+        position:relative;
+        width:600px;
+        height:400px;
+        text-align:center;
+    }
+    #container p {
+        text-align:center;
+    }
+    #container a {
+        font-size:18px;
+        text-decoration:none;
+    }
+    #container .title {
+        text-shadow: 0px 1px 3px rgba(22, 91, 102, 0.65);
+    }
+    #container a:visited {
+        color: rgba(22, 91, 102, 0.65);
+        text-decoration:none;
+    }
+    #container a:hover {
+        color: rgba(22, 102, 97, 0.49);
+    }
+    #container td {
+        font-size:24px;
+    }
+    #countTable {
+        width:100%;
+        position:relative;
+    }
+    #container a.increase, #container a.decrease {
+        font-size:32px;
+    }
+    #createForm {
+        width:175px;
+        height:100px;
+        margin-bottom:10px;
+        position:absolute;
+        left:50%;
+        margin-left:-85px;
+        top:-100px;
+        text-align:center;
+    }
+    .hidden {
+        visibility:hidden;
+        display:none;
+    }
+    .error {
+        color:red;
+    }
+    .changedUp {
+        color: green;
+        cursor: pointer;
+    }
+    .changedDown {
+        color: red;
+        cursor: pointer;
+    }
+    #up, #down {
+        position:absolute;
+    }
+    #up { color:green; }
+    #down { color:red; }
+    #home {
+        color:rgba(22, 91, 102, 0.65);
+        font-size:48px;
+        position:absolute;
+        top:-10px;
+        left:20px;
+    }
+    #home:hover { color:rgba(22, 102, 97, 0.49); }
+    .home { font-size:12px; color:black; }
+
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href='http://fonts.googleapis.com/css?family=Unica+One' rel='stylesheet' type='text/css'>
+
+<div id="up" class="hidden">⇧</div>
+<div id="down" class="hidden">⇩</div>
+<div id="home"><a href="/count/">●</a><span class="home">home</span></div>
+
+<div id="createForm" class="hidden">
+    <form action="/count/create/" method="POST">
+        <input type="text" name="title" placeholder="Title" />
+        <input type="text" name="count" placeholder="Initial Count" />
+        <button type="submit" id="submit" value="Create!">Create!</button>
+        {% csrf_token %}
+    </form>
+</div>
+<div id="container">
+    {% if counters %}
+    <p><a href="#" id="create">Create a new count?</a></p>
+    <table id="countTable">
+        {% for each in counters %}
+        <tr><td><a href="#" class="hidden delete">X</a></td><td class="title">{{ each.title }}</td><td class="count">{{ each.count }}</td><td><a href="#" class="increase">+</a></td><td><a href="#" class="decrease">-</td></tr>
+        {% endfor %}
+    </table>
+    {% else %}
+        <h2>You don't have any counts.</h2>
+        <p><a href="#" id="create">Create one now?</a></p>
+    {% endif %}
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js" type="text/javascript"></script>
+<script src="https://raw.github.com/jquery/jquery-color/master/jquery.color.js"></script>
+<script>
+    var token = '{{ csrf_token }}';
+
+    $("#create").click(function() {
+        var form = $("#createForm");
+        var content = $("#container");
+
+        if (form.hasClass("hidden")) {
+            form.removeClass("hidden");
+            form.animate({'top' : '0px'}, 1000, function(){});
+            content.animate({'top' : '100px'}, 1000, function(){});
+        } else {
+            form.animate({'top' : '-100px'}, 1000, function(){});
+            content.animate({'top' : '0px'}, 1000, function(){});
+            setTimeout(function(){ form.addClass("hidden"); }, 1000);
+        }
+
+    });
+
+    $("#submit").click(function(e) {
+        var form = $("#createForm"),
+                inputs = form.find('input'),
+                title = $(inputs[0]).val(),
+                count = $(inputs[1]).val();
+
+        if (title.length == 0 && count.length == 0) {
+            e.preventDefault();
+            form.animate({'backgroundColor' : 'red'}, 500, function() { $(this).css('background-color', 'white'); });
+        } else {
+            $('#submit').submit();
+        }
+    });
+
+    $(".increase").click(function(){ var number = $($(this).parent().parent().find("td")[2]); number.html(parseInt(number.html()) + 1); number.removeClass("changedDown").addClass("changedUp"); showChange("up", number.offset());});
+    $(".decrease").click(function(){ var number = $($(this).parent().parent().find("td")[2]); number.html(parseInt(number.html()) - 1); number.removeClass("changedUp").addClass("changedDown"); showChange("down", number.offset());});
+
+    function showChange(change, position) {
+        if (change == "up") {
+            $('#up').css("top", position.top).css("left", position.left - 15);
+            $('#up').removeClass("hidden");
+            $('#up').stop(true).animate({'top' : position.top - 25}, 500, function(){$('#up').addClass("hidden");});
+        } else {
+            $('#down').css("top", position.top+25).css("left", position.left - 10);
+            $('#down').removeClass("hidden");
+            $('#down').stop(true).animate({'top' : position.top + 50}, 500, function(){$('#down').addClass("hidden");});
+        }
+    }
+    $(".changedUp, .changedDown").live('click', function(){
+
+        var row = $(this).parent().find("td"),
+        title = $(row[1]).html(),
+        newCount = $(row[2]).html();
+
+        var element = $(this);
+
+        $.post("/count/update/", {
+            title: title,
+            count: newCount,
+            csrfmiddlewaretoken: token
+        }, function(data){
+            if (data == "Updated") {
+                element.removeClass("changedUp").removeClass("changedDown");
+            }
+        });
+    });
+
+    $(".title").click(function() {
+        var del = $(this).parent().find('.delete');
+        if (del.hasClass("hidden"))
+          del.removeClass("hidden");
+        else
+          del.addClass("hidden");
+    });
+
+    $(".delete").click(function(){
+        var title = $(this).parent().parent().find('.title');
+        var element = title;
+
+        title = $.trim(title.html());
+        console.log(title);
+
+        $.post("/count/remove/", {
+            title: title,
+            csrfmiddlewaretoken: token
+        }, function(data){
+            if (data == "Deleted") {
+                element.parent().hide('slow', function(){element.remove();});
+            }
+            console.log(data);
+        });
+    });
+</script>
