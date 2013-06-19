@@ -10,9 +10,10 @@ I needed to count every outlet in my home. This helped me easily count the numbe
 
 #### How to Run
 
-1. Adjust the directory variables in iCount/settings.py
-2. Create a SECRET_KEY in iCount/settings.py
+1. Adjust the directory variables and create a SECRET_KEY in iCount/settings.py
+
 
     python manage.py runserver 0.0.0.0:8000
 
-4. Visit http://0.0.0.0:8000/count in your browser
+
+3. Visit http://0.0.0.0:8000/count in your browser
